@@ -13,10 +13,9 @@ class Rocket:
 
         # == Parametros Bases ==
         self.position = Vector2(x, y)       
-        self.velocity_x = 0.0
-        self.velocity_y = 0.0
-        self.vel_grav = 0.0
+        self.velocity = Vector2(0, 0)
         self.angle = angle
+        self.state = "start"
 
         # == Parametros Editables ==
         self.max_speed = config["ROCKET_MAX_SPEED"]
@@ -32,26 +31,69 @@ class Rocket:
         self.height = config["HEIGHT_ROCKET"]
         self.image = pygame.transform.scale(self.original_image, (int(self.width), int(self.height)))
 
-    def update(self, dt):
+
+    def update(self, floor, dt):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]: # Si se presiona la flecha izquierda el ángulo disminuye.
-            self.angle += self.turn_rate * dt 
-        if keys[pygame.K_RIGHT]: # Si se presiona la flecha derecha el ángulo aumenta.
+
+
+        if self.state == "start" and keys[pygame.K_UP]:
+            self.state = "flying"
+
+        if self.state != "flying":
+            return
+
+
+        # == Giro ==
+        if keys[pygame.K_LEFT]:
+            self.angle += self.turn_rate * dt
+        if keys[pygame.K_RIGHT]:
             self.angle += -self.turn_rate * dt
 
+        # == Gravedad ==
+        self.velocity.y += self.gravity * dt
+
+        # == Motor ==
         if keys[pygame.K_UP]:
-            pass
+            direction = Vector2(0, -1).rotate(-self.angle)
+            self.velocity += direction * self.acceleration * dt
 
+        # == Tope ==
+        if self.velocity.length() > self.max_speed:
+            self.velocity.scale_to_length(self.max_speed)
 
+        # == Mover ==
+        old_position = Vector2(self.position)
+        self.position += self.velocity * dt
 
+        # == Contacto con el suelo ==
+        if self.touches_floor(floor):
+            self.position = old_position            # deshace el último movimiento
+            speed = self.velocity.length()
+            tilt = abs((self.angle + 180) % 360 - 180)   # 0 = totalmente vertical
+
+            if speed < 3 and tilt < 15:
+                self.state = "landed"
+            else:
+                self.state = "crashed"
+
+            self.velocity = Vector2(0, 0)
 
         
- 
-        
-        direction = Vector2(0, -1).rotate(-self.angle)  # El vector (y) va en negativo porque si xd.
-        #self.position.y += None
-        print(self.velocity_y)
-        
+    def get_corners(self, ppu=32):
+        hw, hh = self.width / 2, self.height / 2
+        local = [Vector2(-hw, -hh), Vector2(hw, -hh), Vector2(hw, hh), Vector2(-hw, hh)]
+        center = self.position * ppu
+        return [center + c.rotate(-self.angle) for c in local]
+
+
+    def touches_floor(self, floor, ppu=32):
+        h, w = floor.shape
+        for p in self.get_corners(ppu):
+            x, y = int(p.x), int(p.y)
+            if 0 <= x < w and 0 <= y < h and floor[y, x]:
+                return True
+        return False
+
 
     def draw(self, surface, ppu=32):
         rotated_image = pygame.transform.rotate(self.image, self.angle)
