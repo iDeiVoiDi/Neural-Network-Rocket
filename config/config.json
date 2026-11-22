@@ -1,0 +1,12 @@
+{
+    "NAME": "Rocket AI",
+    "SCREEN_WIDTH": 1280,
+    "SCREEN_HEIGHT": 700,
+
+    "WIDTH_ROCKET": 100,
+    "HEIGHT_ROCKET": 67,
+    "ROCKET_MAX_SPEED": 9.0,
+    "ROCKET_ACELERATION": 20.0,
+    "ROCKET_GRAVITY": 4.9,
+    "ROCKET_TURN_RATE": 180.0
+}
