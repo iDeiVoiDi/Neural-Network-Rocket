@@ -48,6 +48,9 @@ class Sensor:
         return self.distance
 
     def draw(self, surface):
+        '''
+        Dibujado en pantalla
+        '''
         # == Las partes q chocan ==
         if self.hit:
             color = (255, 0, 0)

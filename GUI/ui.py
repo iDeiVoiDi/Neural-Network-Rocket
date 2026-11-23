@@ -5,8 +5,10 @@ import pygame
 from pathlib import Path
 
 from config.config import load_config
+
 from GUI.rocket import Rocket
 from GUI.sensors import Sensor
+from GUI.position import Objetive
 from GUI.map_loader import load_floor
 
 
@@ -35,11 +37,19 @@ class Game:
         map_path = Path(__file__).resolve().parent.parent / "assets" / "map.png"
         size = (config["SCREEN_WIDTH"], config["SCREEN_HEIGHT"])
 
+        # == Cohete ==
         rocket = Rocket(10, 10)
 
-        # == Sensores: 7 rayos en abanico ==
+        # == Sensores ==
         sensors = [Sensor(offset) for offset in (-60, -30, 0, 30, 60, 180)]
 
+        # == Puntero ==
+        objetive = Objetive()
+
+        # == Carga del suelo ==
+        floor = load_floor(map_path, size)
+
+        # == Carga del mapa ==
         map_surface = pygame.transform.scale(pygame.image.load(map_path).convert(), size=size)
 
         while not self.exit:
@@ -48,11 +58,14 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.exit = True
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        line_x = event.pos[0]
+                        objetive.init(map_surface, line_x)
+                
             
             self.screen.blit(map_surface, (0, 0))
 
-            floor = load_floor(map_path, size)
-            
             rocket.update(floor, dt)
 
             rocket_px = rocket.position * ppu
